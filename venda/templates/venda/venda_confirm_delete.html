@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8 col-sm-12">
+      <div class="card shadow-lg border-0">
+        <!-- Cabeçalho -->
+        <div class="card-header text-center text-white" style="background-color: #6211B8;">
+          <h3 class="mb-0 fw-bold">🗑️ Confirmar Exclusão da Venda</h3>
+        </div>
+
+        <!-- Corpo -->
+        <div class="card-body bg-light">
+          <p class="text-center text-muted mb-4">
+            Tem certeza que deseja <strong class="text-danger">excluir</strong> esta venda? Esta ação é <u>irreversível</u>.
+          </p>
+
+          <div class="border rounded p-3 bg-white shadow-sm mb-4">
+            <h5 class="text-center fw-semibold mb-3" style="color: #8A00E6;">📋 Detalhes da Venda</h5>
+            <ul class="list-group list-group-flush small">
+              <li class="list-group-item"><strong>ID:</strong> {{ venda.id }}</li>
+              <li class="list-group-item"><strong>Data:</strong> {{ venda.data|date:"d/m/Y" }}</li>
+              <li class="list-group-item"><strong>Investimento Realizado:</strong> R$ {{ venda.invest_realizado }}</li>
+              <li class="list-group-item"><strong>Faturamento Geral:</strong> R$ {{ venda.fat_geral }}</li>
+              <li class="list-group-item"><strong>Clima:</strong> {{ venda.clima }}</li>
+            </ul>
+          </div>
+
+          <!-- Ações -->
+          <form method="post" class="d-flex justify-content-center gap-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-lg shadow-sm px-4">
+              <i class="bi bi-trash"></i> Excluir
+            </button>
+            <a href="{% url 'venda:listar' %}" class="btn btn-outline-secondary btn-lg shadow-sm px-4">
+              Cancelar
+            </a>
+          </form>
+        </div>
+
+        <!-- Rodapé -->
+        <div class="card-footer text-center bg-white">
+          <small class="text-muted">⚠️ Esta ação não poderá ser desfeita.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estilo extra opcional -->
+<style>
+  .list-group-item {
+    border: none;
+    padding: 0.4rem 1rem;
+  }
+</style>
+{% endblock %}

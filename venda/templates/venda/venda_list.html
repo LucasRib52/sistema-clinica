@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- Cabeçalho com botões organizados e responsivos -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div>
+      <h3 class="fw-bold text-primary">📈 Histórico de Marketing</h3>
+    </div>
+    <div class="d-flex flex-wrap">
+      <div class="btn-group me-2 mb-2" role="group">
+        <a href="{% url 'venda:export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-info btn-sm">
+          Exportar CSV
+        </a>
+        <a href="{% url 'venda:export_excel' %}?{{ request.GET.urlencode }}" class="btn btn-outline-info btn-sm">
+          Exportar Excel
+        </a>
+      </div>
+      <a href="{% url 'venda:criar' %}" class="btn btn-success btn-sm mb-2 shadow-sm">
+        + Novo Preenchimento
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-12 col-md-8">
+      <label for="data" class="form-label">Selecionar Data ou Intervalo</label>
+      <input type="text" id="data" name="data" class="form-control form-control-sm shadow-sm"
+             placeholder="Selecione uma data ou intervalo" value="{{ request.GET.data }}">
+    </div>
+    <div class="col-6 col-md-2 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary btn-sm w-100 shadow-sm">Filtrar</button>
+    </div>
+    <div class="col-6 col-md-2 d-flex align-items-end">
+      <a href="{% url 'venda:listar' %}" class="btn btn-secondary btn-sm w-100 shadow-sm">Cancelar</a>
+    </div>
+  </form>
+
+  <!-- Tabela de Vendas -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover table-striped align-middle small">
+      <thead class="text-center" style="background-color: #6211B8; color: white;">
+        <tr>
+          <th>Data</th>
+          <th>Mês</th>
+          <th>Ano</th>
+          <th>Semana</th>
+          <th>Invest. Realizado</th>
+          <th>Invest. Projetado</th>
+          <th>Saldo Invest.</th>
+          <th>Vendas Google</th>
+          <th>FAT Projetado</th>
+          <th>FAT Campanha</th>
+          <th>FAT Geral</th>
+          <th>Saldo FAT</th>
+          <th>ROI</th>
+          <th>ROAS</th>
+          <th>CAC</th>
+          <th>TKT Médio</th>
+          <th>ARPU</th>
+          <th>Leads</th>
+          <th>Novos</th>
+          <th>Recorrentes</th>
+          <th>Conversões</th>
+          <th>Taxa Conv.</th>
+          <th>Clima</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for venda in vendas %}
+        <tr class="text-center align-middle">
+          <td>{{ venda.data|date:"d/m/Y" }}</td>
+          <td>{{ venda.mes }}</td>
+          <td>{{ venda.ano }}</td>
+          <td>{{ venda.semana }}</td>
+          <td>R$ {{ venda.invest_realizado|floatformat:"2" }}</td>
+          <td>R$ {{ venda.invest_projetado|floatformat:"2" }}</td>
+          <td>R$ {{ venda.saldo_invest|floatformat:"2" }}</td>
+          <td>R$ {{ venda.vendas_google_meta|floatformat:"2" }}</td>
+          <td>R$ {{ venda.fat_proj|floatformat:"2" }}</td>
+          <td>R$ {{ venda.fat_camp_realizado|floatformat:"2" }}</td>
+          <td>R$ {{ venda.fat_geral|floatformat:"2" }}</td>
+          <td>R$ {{ venda.saldo_fat|floatformat:"2" }}</td>
+          <td>{{ venda.roi_realizado|floatformat:"2" }}</td>
+          <td>{{ venda.roas_realizado|floatformat:"2" }}</td>
+          <td>R$ {{ venda.cac_realizado|floatformat:"2" }}</td>
+          <td>R$ {{ venda.ticket_medio_realizado|floatformat:"2" }}</td>
+          <td>R$ {{ venda.arpu_realizado|floatformat:"2" }}</td>
+          <td>{{ venda.leads }}</td>
+          <td>{{ venda.clientes_novos }}</td>
+          <td>{{ venda.clientes_recorrentes }}</td>
+          <td>{{ venda.conversoes }}</td>
+          <td>{{ venda.taxa_conversao|floatformat:"2" }}%</td>
+          <td class="text-center">
+            {% if "Ensolarado" in venda.clima %}
+              <i class="bi bi-brightness-high-fill text-warning" title="{{ venda.clima }}"></i>
+            {% elif "Nublado" in venda.clima %}
+              <i class="bi bi-cloud-fill text-secondary" title="{{ venda.clima }}"></i>
+            {% elif "Chuvoso" in venda.clima %}
+              <i class="bi bi-cloud-rain-fill text-primary" title="{{ venda.clima }}"></i>
+            {% elif "Tempestade" in venda.clima %}
+              <i class="bi bi-cloud-lightning-fill text-danger" title="{{ venda.clima }}"></i>
+            {% elif "Nevando" in venda.clima %}
+              <i class="bi bi-snow2 text-info" title="{{ venda.clima }}"></i>
+            {% else %}
+              <i class="bi bi-question-circle-fill text-muted" title="{{ venda.clima }}"></i>
+            {% endif %}
+            <br><small>{{ venda.clima }}</small>
+          </td>
+          <td>
+            <a href="{% url 'venda:detalhar' venda.id %}" class="btn btn-outline-info btn-sm mb-1" title="Detalhar">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="{% url 'venda:editar' venda.id %}" class="btn btn-outline-warning btn-sm mb-1" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'venda:deletar' venda.id %}" class="btn btn-outline-danger btn-sm" title="Deletar">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="26" class="text-center text-muted">Nenhuma venda registrada ainda.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginação -->
+  <nav class="mt-4" aria-label="Navegação de página">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Anterior</span>
+        </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Próximo</span>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+<!-- Estilos adicionais para responsividade -->
+<style>
+  @media (max-width: 576px) {
+    h3 { font-size: 1.25rem; }
+    .btn { font-size: 0.8rem; }
+    table { font-size: 0.75rem; }
+  }
+  .table-responsive {
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    overflow-x: auto;
+  }
+</style>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    flatpickr("#data", {
+      mode: "range",
+      dateFormat: "d/m/Y",
+      locale: "pt",
+      rangeSeparator: " até "
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Planejador Semanal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  {% block extrahead %}{% endblock %}
+
+  <style>
+    :root {
+      --primary: #6211B8;
+      --primary-hover: #7a2cd1;
+      --text: white;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding-bottom: 60px;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 220px;
+      background-color: var(--primary);
+      color: var(--text);
+      padding-top: 2rem;
+      z-index: 999;
+      transition: all 0.3s;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: var(--text);
+      text-decoration: none;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .sidebar a.active {
+      background-color: var(--primary-hover);
+      font-weight: bold;
+      border-left: 4px solid white;
+    }
+
+    .main-content {
+      margin-left: 220px;
+      padding: 2rem;
+    }
+
+    .content {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .bottom-navbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--primary);
+      color: var(--text);
+      height: 56px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .bottom-navbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 18px;
+    }
+
+    .bottom-navbar a:hover {
+      color: #ffffff;
+      text-shadow: 0 0 5px rgba(255,255,255,0.7);
+    }
+
+    .dropdown-menu a {
+      color: #000 !important;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        left: -220px;
+      }
+
+      .sidebar.show {
+        left: 0;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+
+      .sidebar-toggle {
+        display: block;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1001;
+        color: var(--primary);
+        background: #fff;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botão para toggle da sidebar em mobile -->
+  <button class="sidebar-toggle d-md-none" id="sidebarToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <!-- Dashboard -->
+    <a href="{% url 'dashboard:home' %}"
+       class="{% if request.resolver_match.view_name == 'dashboard:home' %}active{% endif %}">
+      <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+    </a>
+
+    <!-- Marketing -->
+    <a href="{% url 'venda:listar' %}"
+       class="{% if request.resolver_match.view_name == 'venda:listar' %}active{% endif %}">
+      <i class="bi bi-cash-stack mr-2"></i> Marketing
+    </a>
+
+    <!-- Usuário (Dropdown) -->
+    <div class="dropdown">
+      <a href="#" class="dropdown-toggle {% if request.resolver_match.view_name == 'login' or request.resolver_match.view_name == 'logout' %}active{% endif %}"
+         id="userMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="bi bi-person-circle mr-2"></i> Usuário
+      </a>
+      <div class="dropdown-menu" aria-labelledby="userMenu">
+        {% if user.is_authenticated %}
+          <!-- Logout via POST -->
+          <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item">Sair</button>
+          </form>
+        {% else %}
+          <a class="dropdown-item {% if request.resolver_match.view_name == 'login' %}active{% endif %}" 
+             href="{% url 'login' %}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteúdo principal -->
+  <main class="main-content">
+    <div class="messages">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Navbar Inferior -->
+  <div class="bottom-navbar d-md-none">
+    <a href="{% url 'dashboard:home' %}"><i class="bi bi-speedometer2"></i></a>
+    <a href="{% url 'venda:listar' %}"><i class="bi bi-cash-stack"></i></a>
+    <a href="#" data-toggle="dropdown"><i class="bi bi-person-circle"></i></a>
+  </div>
+
+  <!-- Scripts JS obrigatórios -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  {% block extrascripts %}{% endblock %}
+  <script>
+    document.getElementById("sidebarToggle").addEventListener("click", function () {
+      document.getElementById("sidebar").classList.toggle("show");
+    });
+  </script>
+</body>
+</html>

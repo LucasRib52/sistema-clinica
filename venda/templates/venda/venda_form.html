@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow-lg border-0">
+    <div class="card-header text-center" style="background-color: #6211B8; color: white;">
+      <h2 class="fw-bold">Registrar Semana</h2>
+    </div>
+    <div class="card-body" style="background-color: #F9F9F9;">
+      <form method="post" class="p-4">
+        {% csrf_token %}
+
+        <h5 class="fw-bold mb-3" style="color: #8A00E6;">📌 Preenchimento Manual</h5>
+        {% for field in form.visible_fields %}
+          {% if not field.field.widget.attrs.readonly %}
+          <div class="mb-4">
+            <label for="{{ field.id_for_label }}" class="form-label fw-semibold" style="color: #6211B8;">
+              {{ field.label }}
+            </label>
+            {{ field|add_class:"form-control border-2" }}
+            {% if field.errors %}
+              <div class="text-danger small">{{ field.errors|striptags }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        <hr class="my-4">
+
+        <h5 class="fw-bold mb-3" style="color: #8A00E6;">⚙️ Calculado automaticamente</h5>
+        {% for field in form.visible_fields %}
+          {% if field.field.widget.attrs.readonly %}
+          <div class="mb-4">
+            <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-muted">
+              {{ field.label }}
+            </label>
+            {{ field|add_class:"form-control border-2 bg-light" }}
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Botões -->
+        <div class="d-flex justify-content-between mt-4">
+          <a href="{% url 'venda:listar' %}" class="btn btn-outline-secondary px-4">Cancelar</a>
+          <button type="submit" class="btn px-4" style="background-color: #F9225E; color: white;">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (max-width: 576px) {
+    h2 { font-size: 1.5rem; }
+    .card-body { padding: 1.5rem; }
+    .btn { font-size: 0.9rem; }
+  }
+
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    border-color: #6211B8 !important;
+    box-shadow: none !important;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="date"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #F9225E !important;
+    box-shadow: 0 0 5px rgba(249, 34, 94, 0.5) !important;
+  }
+</style>
+{% endblock %}

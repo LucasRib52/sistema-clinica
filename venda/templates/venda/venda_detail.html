@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow border-0">
+    <div class="card-header text-center" style="background-color: #6211B8; color: white;">
+      <h3 class="fw-bold mb-0">Detalhes da Venda</h3>
+    </div>
+    <div class="card-body p-4" style="background-color: #F9F9F9;">
+      <!-- Data e Período -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">📅 Período</h5>
+        <p><strong>Data:</strong> {{ venda.data|date:"d/m/Y" }}</p>
+        <p><strong>Mês:</strong> {{ venda.mes }} | <strong>Ano:</strong> {{ venda.ano }} | <strong>Semana:</strong> {{ venda.semana }}</p>
+      </div>
+
+      <!-- Investimentos -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">💸 Investimentos</h5>
+        <p><strong>Investimento Realizado:</strong> R$ {{ venda.invest_realizado|floatformat:"2" }}</p>
+        <p><strong>Investimento Projetado:</strong> R$ {{ venda.invest_projetado|floatformat:"2" }}</p>
+        <p><strong>Saldo Investimento:</strong> R$ {{ venda.saldo_invest|floatformat:"2" }}</p>
+      </div>
+
+      <!-- Faturamento -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">📈 Faturamento</h5>
+        <p><strong>Faturamento Projetado:</strong> R$ {{ venda.fat_proj|floatformat:"2" }}</p>
+        <p><strong>Faturamento Campanha:</strong> R$ {{ venda.fat_camp_realizado|floatformat:"2" }}</p>
+        <p><strong>Faturamento Geral:</strong> R$ {{ venda.fat_geral|floatformat:"2" }}</p>
+        <p><strong>Saldo Faturamento:</strong> R$ {{ venda.saldo_fat|floatformat:"2" }}</p>
+      </div>
+
+      <!-- Desempenho -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">📊 Indicadores de Desempenho</h5>
+        <p><strong>ROI Realizado:</strong> {{ venda.roi_realizado|floatformat:"2" }}</p>
+        <p><strong>ROAS Realizado:</strong> {{ venda.roas_realizado|floatformat:"2" }}</p>
+        <p><strong>CAC Realizado:</strong> R$ {{ venda.cac_realizado|floatformat:"2" }}</p>
+        <p><strong>Ticket Médio:</strong> R$ {{ venda.ticket_medio_realizado|floatformat:"2" }}</p>
+        <p><strong>ARPU:</strong> R$ {{ venda.arpu_realizado|floatformat:"2" }}</p>
+      </div>
+
+      <!-- Leads e Clientes -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">👥 Leads e Clientes</h5>
+        <p><strong>Leads:</strong> {{ venda.leads }}</p>
+        <p><strong>Clientes Novos:</strong> {{ venda.clientes_novos }}</p>
+        <p><strong>Clientes Recorrentes:</strong> {{ venda.clientes_recorrentes }}</p>
+      </div>
+
+      <!-- Engajamento -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">🧲 Engajamento</h5>
+        <p><strong>Cliques:</strong> {{ venda.cliques }}</p>
+        <p><strong>Conversões:</strong> {{ venda.conversoes }}</p>
+        <p><strong>Taxa de Conversão:</strong> {{ venda.taxa_conversao|floatformat:"3" }}%</p>
+      </div>
+
+      <!-- Clima -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-secondary">🌤️ Clima</h5>
+        <p>
+          {% if "Ensolarado" in venda.clima %}
+            <i class="bi bi-brightness-high-fill text-warning"></i>
+          {% elif "Nublado" in venda.clima %}
+            <i class="bi bi-cloud-fill text-secondary"></i>
+          {% elif "Chuvoso" in venda.clima %}
+            <i class="bi bi-cloud-rain-fill text-primary"></i>
+          {% elif "Tempestade" in venda.clima %}
+            <i class="bi bi-cloud-lightning-fill text-danger"></i>
+          {% elif "Nevando" in venda.clima %}
+            <i class="bi bi-snow2 text-info"></i>
+          {% else %}
+            <i class="bi bi-question-circle-fill text-muted"></i>
+          {% endif %}
+          <strong>{{ venda.clima }}</strong>
+        </p>
+      </div>
+
+      <!-- Botão Voltar -->
+      <div class="d-flex justify-content-end">
+        <a href="{% url 'venda:listar' %}" class="btn" style="background-color: #6211B8; color: white;">Voltar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  h5 {
+    color: #6211B8;
+  }
+
+  p {
+    margin-bottom: 0.4rem;
+  }
+
+  @media (max-width: 576px) {
+    h3 { font-size: 1.4rem; }
+    h5 { font-size: 1.1rem; }
+    p { font-size: 0.9rem; }
+    .btn { font-size: 0.9rem; }
+  }
+</style>
+{% endblock %}
