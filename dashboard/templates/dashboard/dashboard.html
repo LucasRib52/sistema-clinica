@@ -249,19 +249,9 @@
           </h5>
           <p class="fs-4">{{ card_content.value }}</p>
           <p class="card-diff">
-            {% if 'Acima' in card_content.diff %}
-              <span class="badge bg-success">
-                <i class="fas fa-arrow-up"></i> {{ card_content.diff }}
-              </span>
-            {% elif 'Abaixo' in card_content.diff %}
-              <span class="badge bg-danger">
-                <i class="fas fa-arrow-down"></i> {{ card_content.diff }}
-              </span>
-            {% else %}
-              <span class="badge bg-secondary">
-                <i class="fas fa-equals"></i> {{ card_content.diff }}
-              </span>
-            {% endif %}
+            <span class="badge bg-light text-dark">
+              {{ card_content.diff|safe }}
+            </span>
           </p>
         </div>
       </div>

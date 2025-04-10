@@ -1,14 +1,3 @@
-"""
-Views do Dashboard de Desempenho.
-
-Dependendo do filtro escolhido pelo usuário (via parâmetro GET 'filter'),
-- Se for 'semana': os dados são filtrados por ano, mês e semana, e os cards exibem o faturamento da semana (com delta).
-- Se for 'mes': os dados são filtrados por ano e mês e os cards exibem o faturamento geral do mês.
-- Se for 'ano': os dados são filtrados somente por ano e os cards exibem o faturamento geral do ano.
-
-Os gráficos sempre exibem os dados completos do período (para 'mes' ou 'semana' agrupados por semana e para 'ano' agrupados por mês).
-"""
-
 from django.views.generic import TemplateView
 from venda.models import Venda
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -63,6 +52,19 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         def overall_average(data):
             return sum(data)/len(data) if data else 0
+
+        def diff_with_icon_and_avg(diff, avg, is_monetary=False):
+            if diff > 0:
+                icon = '<i class="fas fa-arrow-up text-success"></i>'
+            elif diff < 0:
+                icon = '<i class="fas fa-arrow-down text-danger"></i>'
+            else:
+                icon = '<i class="fas fa-equals text-secondary"></i>'
+            
+            if is_monetary:
+                return f'{icon} R$ {avg:,.2f}'
+            else:
+                return f'{icon} {avg:.2f}'
 
         # ========= Filtragem =========
         if filter_type == 'ano':
@@ -193,17 +195,31 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         diff_taxa              = card_taxa_value - avg_taxa
         diff_cac               = card_cac_value - avg_cac
 
-        def diff_message(diff):
-            if diff < 0:
-                return f"Abaixo da média em R$ {abs(diff):,.2f}"
-            elif diff > 0:
-                return f"Acima da média em R$ {diff:,.2f}"
-            else:
-                return "Na média"
+        faturamento_geral_mes = safe_sum([float(e.fat_geral) for e in queryset_full.filter(data__month=month_selected)])
 
-        faturamento_geral_mes = safe_sum([float(e.fat_geral) for e in queryset_full])
-        queryset_year = Venda.objects.filter(data__year=year_selected)
-        faturamento_geral_ano = safe_sum([float(e.fat_geral) for e in queryset_year])
+        # Calcula a média do faturamento mensal considerando apenas os meses preenchidos
+        meses_com_dados = Venda.objects.filter(data__year=year_selected).values_list('data__month', flat=True).distinct()
+        faturamento_mensal = [
+            safe_sum([float(e.fat_geral) for e in Venda.objects.filter(data__year=year_selected, data__month=mes)])
+            for mes in meses_com_dados
+        ]
+        media_faturamento_mes = safe_mean(faturamento_mensal)
+
+        # Calcula a diferença entre o faturamento do mês atual e a média
+        diff_faturamento_mes = faturamento_geral_mes - media_faturamento_mes
+
+        faturamento_geral_ano = safe_sum([float(e.fat_geral) for e in Venda.objects.filter(data__year=year_selected)])
+
+        # Calcula a média do faturamento anual considerando apenas os anos preenchidos
+        anos_com_dados = Venda.objects.values_list('data__year', flat=True).distinct()
+        faturamento_anual = [
+            safe_sum([float(e.fat_geral) for e in Venda.objects.filter(data__year=ano)])
+            for ano in anos_com_dados
+        ]
+        media_faturamento_ano = safe_mean(faturamento_anual)
+
+        # Calcula a diferença entre o faturamento do ano atual e a média
+        diff_faturamento_ano = faturamento_geral_ano - media_faturamento_ano
 
         # ========= Definição dos GRÁFICOS =========
         charts = {
@@ -491,15 +507,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         }
 
         # ========= Definição dos CARDS =========
-        # Para o card de Faturamento, se o filtro for 'mes' ou 'ano'
-        # usamos os valores agregados de todo o período (mês ou ano), sem delta.
         if filter_type == 'semana':
             card_faturamento = {
                 'class': 'bg-primary',
                 'icon': 'fas fa-dollar-sign',
                 'title': 'Faturamento semana',
                 'value': f'R$ {card_faturamento_value:,.2f}',
-                'diff': diff_message(diff_faturamento)
+                'diff': diff_with_icon_and_avg(diff_faturamento, avg_faturamento, is_monetary=True)
             }
         elif filter_type == 'mes':
             card_faturamento = {
@@ -507,7 +521,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'icon': 'fas fa-calendar-alt',
                 'title': 'Faturamento Geral do Mês',
                 'value': f'R$ {faturamento_geral_mes:,.2f}',
-                'diff': ''
+                'diff': diff_with_icon_and_avg(diff_faturamento_mes, media_faturamento_mes, is_monetary=True)
             }
         else:  # filter_type == 'ano'
             card_faturamento = {
@@ -515,7 +529,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'icon': 'fas fa-calendar',
                 'title': 'Faturamento Geral do Ano',
                 'value': f'R$ {faturamento_geral_ano:,.2f}',
-                'diff': ''
+                'diff': diff_with_icon_and_avg(diff_faturamento_ano, media_faturamento_ano, is_monetary=True)
             }
 
         # Outros cards permanecem inalterados
@@ -526,77 +540,77 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'icon': 'fas fa-user-plus',
                 'title': 'Clientes Novos semana',
                 'value': f'{card_clientes_novos_value}',
-                'diff': diff_message(diff_clientes_novos)
+                'diff': diff_with_icon_and_avg(diff_clientes_novos, avg_clientes_novos)
             },
             'cardFatCamp': {
                 'class': 'bg-warning',
                 'icon': 'fas fa-chart-line',
                 'title': 'Fatur. Camp. semana',
                 'value': f'R$ {card_fatcamp_value:,.2f}',
-                'diff': diff_message(diff_fatcamp)
+                'diff': diff_with_icon_and_avg(diff_fatcamp, avg_fatcamp, is_monetary=True)
             },
             'cardLead': {
                 'class': 'bg-secondary',
                 'icon': 'fas fa-bullhorn',
                 'title': 'LEAD semana',
                 'value': f'{card_leads_value}',
-                'diff': diff_message(diff_leads)
+                'diff': diff_with_icon_and_avg(diff_leads, avg_leads)
             },
             'cardVendasGoogle': {
                 'class': 'bg-danger',
                 'icon': 'fas fa-ad',
                 'title': 'Vendas Goog./Meta semana',
                 'value': f'R$ {card_vendas_google_value:,.2f}',
-                'diff': diff_message(diff_vendas_google)
+                'diff': diff_with_icon_and_avg(diff_vendas_google, avg_vendas_google, is_monetary=True)
             },
             'cardROI': {
                 'class': 'bg-dark',
                 'icon': 'fas fa-percentage',
                 'title': 'ROI semana',
                 'value': f'{card_roi_value:.2f}',
-                'diff': diff_message(diff_roi)
+                'diff': diff_with_icon_and_avg(diff_roi, avg_roi)
             },
             'cardTicketMedio': {
                 'class': 'bg-success',
                 'icon': 'fas fa-hand-holding-usd',
                 'title': 'TKT. Med. semana',
                 'value': f'R$ {card_ticket_value:,.2f}',
-                'diff': diff_message(diff_ticket)
+                'diff': diff_with_icon_and_avg(diff_ticket, avg_ticket, is_monetary=True)
             },
             'cardClientesRecorrentes': {
                 'class': 'bg-primary',
                 'icon': 'fas fa-users',
                 'title': 'Clientes Recor. semana',
                 'value': f'{card_clientes_recorrentes_value}',
-                'diff': diff_message(diff_clientes_recorrentes)
+                'diff': diff_with_icon_and_avg(diff_clientes_recorrentes, avg_clientes_recorrentes)
             },
             'cardTaxaConversao': {
                 'class': 'bg-info',
                 'icon': 'fas fa-signal',
                 'title': 'Taxa de conver. semana',
                 'value': f'{card_taxa_value:.3f}',
-                'diff': diff_message(diff_taxa)
+                'diff': diff_with_icon_and_avg(diff_taxa, avg_taxa)
             },
             'cardCAC': {
                 'class': 'bg-warning',
                 'icon': 'fas fa-calculator',
                 'title': 'CAC semana',
                 'value': f'R$ {card_cac_value:,.2f}',
-                'diff': diff_message(diff_cac)
+                'diff': diff_with_icon_and_avg(diff_cac, avg_cac, is_monetary=True)
             },
             'cardFaturamentoMes': {
                 'class': 'bg-secondary',
                 'icon': 'fas fa-calendar-alt',
                 'title': 'Faturamento Geral do Mês',
                 'value': f'R$ {faturamento_geral_mes:,.2f}',
-                'diff': ''
+                'diff': diff_with_icon_and_avg(diff_faturamento_mes, media_faturamento_mes, is_monetary=True)
             },
             'cardFaturamentoAno': {
                 'class': 'bg-dark',
                 'icon': 'fas fa-calendar',
                 'title': 'Faturamento Geral do Ano',
                 'value': f'R$ {faturamento_geral_ano:,.2f}',
-                'diff': ''
+                'diff': diff_with_icon_and_avg(diff_faturamento_ano, media_faturamento_ano, is_monetary=True)
             }
         }
 
